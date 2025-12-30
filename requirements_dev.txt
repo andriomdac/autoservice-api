@@ -1,1 +1,2 @@
 litecli==1.17.0
+icecream==2.1.8
