@@ -4,6 +4,7 @@ from schemas.users import UserCreateSchema
 from db.models.users import User
 from db.config import get_db
 from utils.messages import error_message, success_message
+from utils.security import get_password_hash
 
 
 user_router = APIRouter(prefix="/api/users")
@@ -15,10 +16,12 @@ def create_user(payload: UserCreateSchema, db: Session = Depends(get_db)):
     username = body["username"]
     password = body["password"]
 
-    new_user = User(username=username, password=password)
+    new_user = User(username=username, password=get_password_hash(password))
+
     user_exists = db.query(User).filter(User.username == username).first()
     if user_exists:
         return error_message("Este nome de usuário já existe", 409)
+
     else:
         db.add(new_user)
         db.commit()
