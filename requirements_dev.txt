@@ -1,2 +1,3 @@
 litecli==1.17.0
 icecream==2.1.8
+posting==2.9.2
