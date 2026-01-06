@@ -1,10 +1,15 @@
 from pydantic import BaseModel
 
 
-class LoginSchema(BaseModel):
+class GenerateTokenRequestSchema(BaseModel):
     username: str
     password: str
 
 
-class VerifyTokenSchema(BaseModel):
+class GenerateTokenResponseSchema(BaseModel):
+    access: str
+    claims: dict
+
+
+class VerifyTokenRequestSchema(BaseModel):
     token: str

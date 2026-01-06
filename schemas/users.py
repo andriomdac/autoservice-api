@@ -8,3 +8,9 @@ class UserCreateSchema(BaseModel):
 
 class UserResponseSchema(BaseModel):
     username: str
+    uuid: str
+
+
+class UserList(BaseModel):
+    uuid: str
+    username: str

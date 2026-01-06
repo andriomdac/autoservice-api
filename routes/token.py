@@ -1,53 +1,60 @@
-from re import error
-from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
-from schemas.token import VerifyTokenSchema, LoginSchema
-from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException
+from icecream import ic
+from jwt.exceptions import DecodeError
 from sqlalchemy.orm import Session
 from db.config import get_db
-from zoneinfo import ZoneInfo
+from db.models.users import User
+from schemas.token import (
+    GenerateTokenRequestSchema,
+    GenerateTokenResponseSchema,
+    VerifyTokenRequestSchema,
+)
 import jwt
-from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError, DecodeError
-from utils.security import authenticate_user
-from utils.messages import error_message
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+from utils.security import authenticate_user, validate_token
+from utils.const import key, alg, zone_info, exp_time
 
 
 token_router = APIRouter(prefix="/api/token")
 
-# Todas essas infos abaixo devem ser variáveis de ambiente
-secret_key = "fklu342kfnmvzfjgu321fjdnvcxzçdsu221rdnvb88321nvwdiog89u4304t"
-alg = "HS256"
-tz_info = "America/Sao_Paulo"
-expiration_time = 30
 
+@token_router.post("/", response_model=GenerateTokenResponseSchema)
+def generate_token(payload: GenerateTokenRequestSchema, db: Session = Depends(get_db)):
+    login_failed_msg = "usuário e/ou senha incorretos"
+    login_credentials = payload.model_dump()
 
-@token_router.post("/")
-def get_token(payload: LoginSchema, db: Session = Depends(get_db)):
-    user = payload.model_dump()
-    claims = {}
-    user_exists = authenticate_user(
-        username=user["username"], password=user["password"], db=db
+    # 1a verificação: username existe no banco?
+    user_exists = (
+        db.query(User).filter(User.username == login_credentials["username"]).first()
     )
-    if user_exists:
-        claims["user_uuid"] = str(user_exists.uuid)
-        claims["exp"] = int(
-            (
-                datetime.now(ZoneInfo(tz_info)) + timedelta(minutes=expiration_time)
-            ).timestamp()
-        )
-        token = jwt.encode(payload=claims, key=secret_key, algorithm=alg)
-        return JSONResponse({"access": token}, status_code=200)
-    else:
-        return error_message("Usuário ou senha incorretos")
+    if not user_exists:
+        raise HTTPException(401, login_failed_msg)
+
+    # 2a verificação: senha fornecida bate com a senha do usuário do banco?
+    user_is_authenticated = authenticate_user(
+        username=login_credentials["username"],
+        password=login_credentials["password"],
+        db=db,
+    )
+    if not user_is_authenticated:
+        raise HTTPException(401, login_failed_msg)
+    user = user_is_authenticated  # A partir daqui, o usuário existe e é válido
+
+    # Gerar token a partir de um claims definidos
+    claims = {}
+    claims["exp"] = int(
+        (datetime.now(tz=ZoneInfo(zone_info)) + timedelta(minutes=exp_time)).timestamp()
+    )
+    claims["user_uuid"] = user.uuid
+    token = jwt.encode(payload=claims, key=key, algorithm=alg)
+
+    return {"access": token, "claims": claims}
 
 
 @token_router.post("/verify/")
-def verify_token(payload: VerifyTokenSchema):
+def verify_token(payload: VerifyTokenRequestSchema):
     token = payload.model_dump()["token"]
-    try:
-        decoded = jwt.decode(jwt=token, key=secret_key, algorithms=[alg])
-        return decoded
-    except DecodeError:
-        return error_message("token inválido", 400)
-    except ExpiredSignatureError:
-        return error_message("token expirado", 401)
+    validate_token(token)
+    return {}
