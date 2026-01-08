@@ -72,6 +72,23 @@ def validate_token(token: str) -> None:
 
 
 def token_required(request: Request) -> None:
+    """
+    Dependência para validar a presença e o formato de um token no header da requisição.
+
+    Extrai o token do cabeçalho "authorization", assumindo o formato "Bearer <token>",
+    e invoca a função de validação. Caso o header não exista, envia uma string vazia
+    para a validação.
+
+    Args:
+        request (Request): O objeto da requisição HTTP contendo os headers.
+
+    Raises:
+        HTTPException: Se o token estiver ausente, malformado ou for inválido
+            conforme as regras da função `validate_token`.
+
+    Returns:
+        None
+    """
     headers = request.headers
     token = headers.get("authorization")
     if token:
