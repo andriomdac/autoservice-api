@@ -12,4 +12,5 @@ payment_value_router = APIRouter(prefix="/api/payment-values")
 def create_payment_value(
     payload: PaymentValueRequestSchema, db: Session = Depends(get_db)
 ):
-    return JSONResponse({"msg": "ok"})
+    data = payload.model_dump()
+    return data

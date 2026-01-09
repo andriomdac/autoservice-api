@@ -62,6 +62,8 @@ class PaymentValue(Base):
         unique=True,
         default=lambda: str(uuid.uuid4()),
     )
-    payment_method = Column(Integer, ForeignKey("payment_method.id"), nullable=False)
-    autoservice = Column(Integer, ForeignKey("autoservice.id"), nullable=False)
+    payment_method = Column(
+        String(255), ForeignKey("payment_method.uuid"), nullable=False
+    )
+    autoservice = Column(String(255), ForeignKey("autoservice.uuid"), nullable=False)
     amount = Column(Integer, nullable=False)
