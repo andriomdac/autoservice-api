@@ -1,5 +1,16 @@
+from datetime import datetime
 import uuid
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+)
+from zoneinfo import ZoneInfo
+from utils.const import ZONE_INFO
 from db.config import Base
 
 
@@ -15,11 +26,15 @@ class AutoService(Base):
         default=lambda: str(uuid.uuid4()),
     )
     description = Column(String(255), nullable=False)
-    service_date = Column(DateTime, nullable=False, index=True)
+    service_date = Column(Date, nullable=False, index=True)
     service_value = Column(Integer, nullable=False)
     observations = Column(String(255), nullable=True)
     is_paid = Column(Boolean, nullable=False, default=False)
-    created_at = Column(DateTime, nullable=False, default=(func.now))
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=(lambda: datetime.now(ZoneInfo(ZONE_INFO))),
+    )
 
 
 class PaymentMethod(Base):

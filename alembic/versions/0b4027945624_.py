@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 0f4e422036ff
-Revises: a6956a162eae
-Create Date: 2026-01-06 17:31:18.812382
+Revision ID: 0b4027945624
+Revises: 
+Create Date: 2026-01-09 15:14:01.821359
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '0f4e422036ff'
-down_revision: Union[str, Sequence[str], None] = 'a6956a162eae'
+revision: str = '0b4027945624'
+down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -25,7 +25,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('uuid', sa.String(length=255), nullable=False),
     sa.Column('description', sa.String(length=255), nullable=False),
-    sa.Column('service_date', sa.DateTime(), nullable=False),
+    sa.Column('service_date', sa.Date(), nullable=False),
     sa.Column('service_value', sa.Integer(), nullable=False),
     sa.Column('observations', sa.String(length=255), nullable=True),
     sa.Column('is_paid', sa.Boolean(), nullable=False),
@@ -44,6 +44,16 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_payment_method_id'), 'payment_method', ['id'], unique=False)
     op.create_index(op.f('ix_payment_method_uuid'), 'payment_method', ['uuid'], unique=True)
+    op.create_table('user',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('uuid', sa.String(length=255), nullable=False),
+    sa.Column('username', sa.String(length=255), nullable=False),
+    sa.Column('password', sa.String(length=255), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_user_id'), 'user', ['id'], unique=False)
+    op.create_index(op.f('ix_user_username'), 'user', ['username'], unique=True)
+    op.create_index(op.f('ix_user_uuid'), 'user', ['uuid'], unique=True)
     op.create_table('payment_value',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('uuid', sa.String(length=255), nullable=False),
@@ -65,6 +75,10 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_payment_value_uuid'), table_name='payment_value')
     op.drop_index(op.f('ix_payment_value_id'), table_name='payment_value')
     op.drop_table('payment_value')
+    op.drop_index(op.f('ix_user_uuid'), table_name='user')
+    op.drop_index(op.f('ix_user_username'), table_name='user')
+    op.drop_index(op.f('ix_user_id'), table_name='user')
+    op.drop_table('user')
     op.drop_index(op.f('ix_payment_method_uuid'), table_name='payment_method')
     op.drop_index(op.f('ix_payment_method_id'), table_name='payment_method')
     op.drop_table('payment_method')

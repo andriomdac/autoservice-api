@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 import jwt
 from jwt.exceptions import DecodeError, ExpiredSignatureError
 from fastapi.exceptions import HTTPException
-from utils.const import key, alg
+from utils.const import KEY, ALG
 
 pwd_context = PasswordHash.recommended()
 
@@ -63,7 +63,7 @@ def validate_token(token: str) -> None:
     """
     fail_msg = "token inválido ou expirado"
     try:
-        jwt.decode(jwt=token, key=key, algorithms=[alg])
+        jwt.decode(jwt=token, key=KEY, algorithms=[ALG])
         pass
     except DecodeError:
         raise HTTPException(401, fail_msg)

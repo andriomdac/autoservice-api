@@ -9,7 +9,7 @@ from utils.security import get_password_hash, token_required
 user_router = APIRouter(prefix="/api/users")
 
 
-@user_router.post("/", dependencies=[Depends(token_required)], status_code=201)
+@user_router.post("/", dependencies=[], status_code=201)
 def create_user(
     payload: UserCreateSchema,
     db: Session = Depends(get_db),
@@ -36,7 +36,7 @@ def create_user(
 @user_router.get(
     "/",
     response_model=List[UserList],
-    dependencies=[Depends(token_required)],
+    dependencies=[],
     status_code=200,
 )
 def list_users(db: Session = Depends(get_db)) -> List:

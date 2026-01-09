@@ -1,6 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException
-from icecream import ic
-from jwt.exceptions import DecodeError
 from sqlalchemy.orm import Session
 from db.config import get_db
 from db.models.users import User
@@ -9,13 +7,13 @@ from schemas.token import (
     GenerateTokenResponseSchema,
     VerifyTokenRequestSchema,
 )
+
 import jwt
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from utils.security import authenticate_user, validate_token
-from utils.const import key, alg, zone_info, exp_time
-
+from utils.const import KEY, ALG, ZONE_INFO, EXP_TIME
 
 token_router = APIRouter(prefix="/api/token")
 
@@ -45,10 +43,10 @@ def generate_token(payload: GenerateTokenRequestSchema, db: Session = Depends(ge
     # Gerar token a partir de um claims definidos
     claims = {}
     claims["exp"] = int(
-        (datetime.now(tz=ZoneInfo(zone_info)) + timedelta(minutes=exp_time)).timestamp()
+        (datetime.now(tz=ZoneInfo(ZONE_INFO)) + timedelta(minutes=EXP_TIME)).timestamp()
     )
     claims["user_uuid"] = user.uuid
-    token = jwt.encode(payload=claims, key=key, algorithm=alg)
+    token = jwt.encode(payload=claims, key=KEY, algorithm=ALG)
 
     return {"access": token, "claims": claims}
 
