@@ -1,16 +1,22 @@
 from fastapi import APIRouter, Depends
+from icecream import ic
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
-from db.models.autoservice import AutoService
-from schemas.autoservice import AutoServiceRequestSchema, AutoServiceResponseSchema
-
+from db.models.autoservice import AutoService, PaymentMethod, PaymentValue
+from schemas.autoservice import (
+    AutoServiceDetailResponseSchema,
+    AutoServiceRequestSchema,
+    AutoServiceResponseSchema,
+    PaymentValueRequestSchema,
+    PaymentValueResponseSchema,
+)
 from db.config import get_db
 
 
 autoservice_router = APIRouter(prefix="/api/autoservices")
 
 
-@autoservice_router.post("/")
+@autoservice_router.post("/", response_model=AutoServiceResponseSchema, status_code=201)
 def create_autoservice(
     payload: AutoServiceRequestSchema, db: Session = Depends(get_db)
 ):
@@ -42,3 +48,61 @@ def create_autoservice(
 def list_autoservices(db: Session = Depends(get_db)):
     services = db.query(AutoService).all()
     return services
+
+
+@autoservice_router.get("/{autoservice_id}/")
+def detail_autoservice(autoservice_id: int, db: Session = Depends(get_db)):
+    autoservice_exists = (
+        db.query(AutoService).filter(AutoService.id == autoservice_id).first()
+    )
+    if not autoservice_exists:
+        raise HTTPException(404, "Serviço não encontrado")
+
+    return autoservice_exists.payment_values
+
+
+@autoservice_router.post(
+    "/{autoservice_id}/values/",
+    response_model=PaymentValueResponseSchema,
+    status_code=201,
+)
+def add_autoservice_value(
+    payload: PaymentValueRequestSchema,
+    autoservice_id: int,
+    db: Session = Depends(get_db),
+):
+    method_exists = (
+        db.query(PaymentMethod)
+        .filter(PaymentMethod.id == payload.payment_method_id)
+        .first()
+    )
+    if not method_exists:
+        raise HTTPException(404, "Método de Pagamento não encontrado")
+
+    autoservice_exists = (
+        db.query(AutoService).filter(AutoService.id == autoservice_id).first()
+    )
+    if not autoservice_exists:
+        raise HTTPException(404, "Serviço não encontrado")
+
+    value_method_exists = (
+        db.query(PaymentValue)
+        .filter(
+            PaymentValue.autoservice_id == autoservice_id,
+            PaymentValue.payment_method_id == payload.payment_method_id,
+        )
+        .first()
+    )
+    if value_method_exists:
+        raise HTTPException(409, "Este método de pagamento já existe para esse serviço")
+
+    new_value = PaymentValue()
+    new_value.amount = payload.amount
+    new_value.autoservice_id = autoservice_id
+    new_value.payment_method_id = payload.payment_method_id
+
+    db.add(new_value)
+    db.commit()
+    db.refresh(new_value)
+
+    return new_value

@@ -1,18 +1,15 @@
-from sqlalchemy import Column, String, Integer
-import uuid
+from datetime import datetime
+from sqlalchemy import DateTime, Integer, String, func
 from db.config import Base
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class User(Base):
-    __tablename__ = "user"
+    __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    uuid = Column(
-        String(255),
-        index=True,
-        nullable=False,
-        unique=True,
-        default=lambda: str(uuid.uuid4()),
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(
+        String(255), index=True, unique=True, nullable=False
     )
-    username = Column(String(255), index=True, nullable=False, unique=True)
-    password = Column(String(255), nullable=False)
+    password: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

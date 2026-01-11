@@ -6,5 +6,5 @@ class PaymentMethodRequestSchema(BaseModel):
 
 
 class PaymentMethodResponseSchema(BaseModel):
-    uuid: str
+    id: int
     name: str

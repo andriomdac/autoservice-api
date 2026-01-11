@@ -7,10 +7,10 @@ class UserCreateSchema(BaseModel):
 
 
 class UserResponseSchema(BaseModel):
+    id: int
     username: str
-    uuid: str
 
 
 class UserList(BaseModel):
-    uuid: str
+    id: int
     username: str

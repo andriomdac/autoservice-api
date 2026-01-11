@@ -45,7 +45,7 @@ def generate_token(payload: GenerateTokenRequestSchema, db: Session = Depends(ge
     claims["exp"] = int(
         (datetime.now(tz=ZoneInfo(ZONE_INFO)) + timedelta(minutes=EXP_TIME)).timestamp()
     )
-    claims["user_uuid"] = user.uuid
+    claims["user_id"] = user.id
     token = jwt.encode(payload=claims, key=KEY, algorithm=ALG)
 
     return {"access": token, "claims": claims}

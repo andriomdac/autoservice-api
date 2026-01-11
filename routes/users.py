@@ -28,9 +28,7 @@ def create_user(
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
-        return UserResponseSchema(
-            username=str(new_user.username), uuid=str(new_user.uuid)
-        )
+        return UserResponseSchema(username=str(new_user.username), id=new_user.id)
 
 
 @user_router.get(
