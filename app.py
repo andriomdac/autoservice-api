@@ -4,6 +4,7 @@ from routes.users import user_router
 from routes.token import token_router
 from routes.autoservice import autoservice_router
 from routes.tenant import tenant_router
+from routes.roles import role_router
 
 
 app = FastAPI()
@@ -12,3 +13,4 @@ app.include_router(token_router)
 app.include_router(autoservice_router)
 app.include_router(payment_method_router)
 app.include_router(tenant_router)
+app.include_router(role_router)

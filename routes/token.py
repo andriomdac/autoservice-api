@@ -50,6 +50,7 @@ def generate_token(payload: GenerateTokenRequestSchema, db: Session = Depends(ge
     )
     claims["user_id"] = user.id
     claims["tenant"] = user.tenant_id
+    claims["role"] = user.role.name
     token = jwt.encode(payload=claims, key=KEY, algorithm=ALG)
 
     return {"access": token, "claims": claims}

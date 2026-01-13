@@ -15,3 +15,4 @@ class Tenant(Base):
 
     # relacionamentos
     users = relationship("User", back_populates="tenant")
+    autoservices = relationship("AutoService", back_populates="tenant")

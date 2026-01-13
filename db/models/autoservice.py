@@ -18,8 +18,11 @@ class AutoService(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     description: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     service_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    tenant_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("tenants.id"), nullable=False
+    )
     service_value: Mapped[int] = mapped_column(Integer, nullable=False)
-    observations: Mapped[str] = mapped_column(String(255), nullable=True)
+    observations: Mapped[str] = mapped_column(String(255), nullable=False)
     is_paid: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
@@ -27,6 +30,7 @@ class AutoService(Base):
     payment_values = relationship(
         "PaymentValue", back_populates="autoservice", cascade="all, delete-orphan"
     )
+    tenant = relationship("Tenant", back_populates="autoservices")
 
 
 class PaymentMethod(Base):

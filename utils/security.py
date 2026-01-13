@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi.requests import Request
 from pwdlib import PasswordHash
 from db.models.users import User
@@ -43,7 +44,7 @@ def authenticate_user(username: str, password: str, db: Session) -> User | None:
         return None
 
 
-def validate_token(token: str) -> None:
+def validate_token(token: str, return_claims: bool = False) -> None:
     """
     Valida a integridade e a expiração de um token JWT.
 
@@ -63,36 +64,34 @@ def validate_token(token: str) -> None:
     """
     fail_msg = "token inválido ou expirado"
     try:
-        jwt.decode(jwt=token, key=KEY, algorithms=[ALG])
+        decoded = jwt.decode(jwt=token, key=KEY, algorithms=[ALG])
+        if return_claims:
+            return decoded
         pass
+
     except DecodeError:
         raise HTTPException(401, fail_msg)
     except ExpiredSignatureError:
         raise HTTPException(401, fail_msg)
 
 
-def token_required(request: Request) -> None:
-    """
-    Dependência para validar a presença e o formato de um token no header da requisição.
+def get_token_claims(request: Request):
+    token = get_token_from_header(request)
+    return validate_token(token=token, return_claims=True)
 
-    Extrai o token do cabeçalho "authorization", assumindo o formato "Bearer <token>",
-    e invoca a função de validação. Caso o header não exista, envia uma string vazia
-    para a validação.
 
-    Args:
-        request (Request): O objeto da requisição HTTP contendo os headers.
-
-    Raises:
-        HTTPException: Se o token estiver ausente, malformado ou for inválido
-            conforme as regras da função `validate_token`.
-
-    Returns:
-        None
-    """
+def get_token_from_header(request: Request):
     headers = request.headers
     token = headers.get("authorization")
+
     if token:
         token = token.split(sep=" ")[1]
     else:
         token = ""
+
+    return token
+
+
+def token_required(request: Request) -> None:
+    token = get_token_from_header(request)
     validate_token(token)

@@ -1,3 +1,4 @@
+from enum import auto
 from fastapi import APIRouter, Depends, Request
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
@@ -10,7 +11,7 @@ from schemas.autoservice import (
     PaymentValueResponseSchema,
 )
 from db.config import get_db
-from utils.security import token_required
+from utils.security import get_token_claims, token_required, validate_token
 
 
 autoservice_router = APIRouter(prefix="/api/autoservices")
@@ -23,17 +24,20 @@ autoservice_router = APIRouter(prefix="/api/autoservices")
     status_code=201,
 )
 def create_autoservice(
+    request: Request,
     payload: AutoServiceRequestSchema,
     db: Session = Depends(get_db),
 ):
     data = payload.model_dump(mode="python")
     autoservice = AutoService(**data)
+    autoservice.tenant_id = get_token_claims(request)["tenant_id"]
 
     service_exists = (
         db.query(AutoService)
         .filter(
             AutoService.description == autoservice.description,
             AutoService.service_date == autoservice.service_date,
+            AutoService.tenant,
         )
         .first()
     )
