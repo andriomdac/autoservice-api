@@ -6,8 +6,9 @@ services:
       POSTGRES_PASSWORD: 1234
       POSTGRES_DB: postgres
     volumes:
-      - /postgresql/:/var/lib/postgresql/data 
-
+      - /postgresql/:/var/lib/postgresql/data
+    ports:
+      - 5432:5432 
   api:
     build: .
     ports:
