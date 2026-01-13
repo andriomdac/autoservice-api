@@ -24,12 +24,10 @@ autoservice_router = APIRouter(prefix="/api/autoservices")
     status_code=201,
 )
 def create_autoservice(
-    request: Request,
     payload: AutoServiceRequestSchema,
     db: Session = Depends(get_db),
 ):
-    data = payload.model_dump(mode="python")
-    autoservice = AutoService(**data)
+    autoservice = AutoService(**payload.model_dump())
     service_exists = (
         db.query(AutoService)
         .filter(
