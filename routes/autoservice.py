@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from icecream import ic
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
 from db.models.autoservice import AutoService, PaymentMethod, PaymentValue
@@ -44,13 +43,15 @@ def create_autoservice(
     return autoservice
 
 
-@autoservice_router.get("/", response_model=list[AutoServiceResponseSchema])
+@autoservice_router.get("/", response_model=list[AutoServiceDetailResponseSchema])
 def list_autoservices(db: Session = Depends(get_db)):
     services = db.query(AutoService).all()
     return services
 
 
-@autoservice_router.get("/{autoservice_id}/")
+@autoservice_router.get(
+    "/{autoservice_id}/", response_model=AutoServiceDetailResponseSchema
+)
 def detail_autoservice(autoservice_id: int, db: Session = Depends(get_db)):
     autoservice_exists = (
         db.query(AutoService).filter(AutoService.id == autoservice_id).first()
@@ -58,7 +59,7 @@ def detail_autoservice(autoservice_id: int, db: Session = Depends(get_db)):
     if not autoservice_exists:
         raise HTTPException(404, "Serviço não encontrado")
 
-    return autoservice_exists.payment_values
+    return autoservice_exists
 
 
 @autoservice_router.post(
@@ -71,6 +72,7 @@ def add_autoservice_value(
     autoservice_id: int,
     db: Session = Depends(get_db),
 ):
+    # Etapa 1: Método de pagamento existe no banco?
     method_exists = (
         db.query(PaymentMethod)
         .filter(PaymentMethod.id == payload.payment_method_id)
@@ -79,12 +81,15 @@ def add_autoservice_value(
     if not method_exists:
         raise HTTPException(404, "Método de Pagamento não encontrado")
 
+    # Etapa 2: O serviço (autoservice) existe no banco?
     autoservice_exists = (
         db.query(AutoService).filter(AutoService.id == autoservice_id).first()
     )
     if not autoservice_exists:
         raise HTTPException(404, "Serviço não encontrado")
 
+    # Etapa 3: O método de pagamento utilizado pra este novo valor já existe em algum
+    # dos valores atrelados a esse serviço?
     value_method_exists = (
         db.query(PaymentValue)
         .filter(
@@ -96,11 +101,10 @@ def add_autoservice_value(
     if value_method_exists:
         raise HTTPException(409, "Este método de pagamento já existe para esse serviço")
 
-    new_value = PaymentValue()
-    new_value.amount = payload.amount
-    new_value.autoservice_id = autoservice_id
-    new_value.payment_method_id = payload.payment_method_id
+    # Etapa 4: Montar o objeto Value utilizando as informações dadas pelo usuário
+    new_value = PaymentValue(**payload.model_dump(), autoservice_id=autoservice_id)
 
+    # Etapa 5: Salvar o novo objeto no banco
     db.add(new_value)
     db.commit()
     db.refresh(new_value)

@@ -1,3 +1,2 @@
 icecream
 posting
-sqlit-tui

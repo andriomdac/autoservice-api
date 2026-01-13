@@ -1,18 +1,7 @@
 from pydantic import BaseModel
 from datetime import date, datetime
 
-
-class AutoServiceResponseSchema(BaseModel):
-    id: int
-    description: str
-    service_date: date
-    service_value: int
-    observations: str
-    is_paid: bool
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
+from schemas.payment_methods import PaymentMethodResponseSchema
 
 
 class AutoServiceRequestSchema(BaseModel):
@@ -33,6 +22,7 @@ class PaymentValueResponseSchema(BaseModel):
     payment_method_id: int
     autoservice_id: int
     amount: int
+    payment_method: PaymentMethodResponseSchema
 
     class Config:
         from_attributes = True
@@ -46,4 +36,20 @@ class AutoServiceDetailResponseSchema(BaseModel):
     observations: str
     is_paid: bool
     created_at: datetime
-    values: list
+    payment_values: list[PaymentValueResponseSchema]
+
+    class Config:
+        from_attributes = True
+
+
+class AutoServiceResponseSchema(BaseModel):
+    id: int
+    description: str
+    service_date: date
+    service_value: int
+    observations: str
+    is_paid: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

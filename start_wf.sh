@@ -22,7 +22,4 @@ xfce4-terminal \
   --working-directory="$BASE_DIR" \
   --command="zsh -c 'source .venv/bin/activate; posting; exec zsh'" &
 
-xfce4-terminal \
-  --title="SQLite CLI" \
-  --working-directory="$BASE_DIR" \
-  --command="zsh -c 'source .venv/bin/activate; sqlit; exec zsh'" &
+flatpak run io.github.ppvan.tarug &

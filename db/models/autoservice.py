@@ -20,7 +20,7 @@ class AutoService(Base):
     service_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     service_value: Mapped[int] = mapped_column(Integer, nullable=False)
     observations: Mapped[str] = mapped_column(String(255), nullable=True)
-    is_paid: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_paid: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     # Relacionamentos

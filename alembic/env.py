@@ -7,6 +7,7 @@ from alembic import context
 from db.config import Base
 from db.models.users import User
 from db.models.autoservice import AutoService, PaymentMethod, PaymentValue
+from db.models.tenant import Tenant
 from utils.const import DB_URL
 
 # this is the Alembic Config object, which provides
