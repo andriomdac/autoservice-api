@@ -8,17 +8,26 @@ from schemas.payment_methods import (
     PaymentMethodRequestSchema,
     PaymentMethodResponseSchema,
 )
+from utils.security import token_required
 
 payment_method_router = APIRouter(prefix="/api/payment-methods")
 
 
-@payment_method_router.get("/", response_model=list[PaymentMethodResponseSchema])
+@payment_method_router.get(
+    "/",
+    response_model=list[PaymentMethodResponseSchema],
+    dependencies=[Depends(token_required)],
+)
 def list_methods(db: Session = Depends(get_db)):
     methods = db.query(PaymentMethod).all()
     return methods
 
 
-@payment_method_router.post("/", response_model=PaymentMethodResponseSchema)
+@payment_method_router.post(
+    "/",
+    response_model=PaymentMethodResponseSchema,
+    dependencies=[Depends(token_required)],
+)
 def create_method(payload: PaymentMethodRequestSchema, db: Session = Depends(get_db)):
     data = payload.model_dump()
     method = PaymentMethod()

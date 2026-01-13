@@ -1,9 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.functions import user
 from db.models.tenant import Tenant
-from routes import tenant
 from schemas.users import (
     UserAdminCreateSchema,
     UserCreateSchema,
@@ -13,7 +11,6 @@ from schemas.users import (
 from db.models.users import Role, User
 from db.config import get_db
 from utils.security import authenticate_user, get_password_hash, token_required
-from icecream import ic
 
 user_router = APIRouter(prefix="/api/users")
 
@@ -46,7 +43,10 @@ def create_admin(payload: UserAdminCreateSchema, db: Session = Depends(get_db)):
 
 
 @user_router.post(
-    "/", dependencies=[], status_code=201, response_model=UserResponseSchema
+    "/",
+    dependencies=[Depends(token_required)],
+    status_code=201,
+    response_model=UserResponseSchema,
 )
 def create_user(
     payload: UserCreateSchema,
@@ -76,7 +76,7 @@ def create_user(
 @user_router.get(
     "/",
     response_model=List[UserResponseSchema],
-    dependencies=[],
+    dependencies=[Depends(token_required)],
     status_code=200,
 )
 def list_users(db: Session = Depends(get_db)) -> List:
@@ -84,7 +84,11 @@ def list_users(db: Session = Depends(get_db)) -> List:
     return users
 
 
-@user_router.get("/{user_id}/", response_model=UserResponseSchema)
+@user_router.get(
+    "/{user_id}/",
+    response_model=UserResponseSchema,
+    dependencies=[Depends(token_required)],
+)
 def detail_user(user_id: int, db: Session = Depends(get_db)):
     user_exists = db.query(User).filter(User.id == user_id).first()
     if not user_exists:
@@ -92,7 +96,11 @@ def detail_user(user_id: int, db: Session = Depends(get_db)):
     return user_exists
 
 
-@user_router.put("/{user_id}/", response_model=UserResponseSchema)
+@user_router.put(
+    "/{user_id}/",
+    response_model=UserResponseSchema,
+    dependencies=[Depends(token_required)],
+)
 def update_user_password(
     payload: UserUpdateSchema, user_id: int, db: Session = Depends(get_db)
 ):

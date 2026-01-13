@@ -18,7 +18,10 @@ from utils.const import KEY, ALG, ZONE_INFO, EXP_TIME
 token_router = APIRouter(prefix="/api/token")
 
 
-@token_router.post("/", response_model=GenerateTokenResponseSchema)
+@token_router.post(
+    "/",
+    response_model=GenerateTokenResponseSchema,
+)
 def generate_token(payload: GenerateTokenRequestSchema, db: Session = Depends(get_db)):
     login_failed_msg = "usuário e/ou senha incorretos"
     login_credentials = payload.model_dump()

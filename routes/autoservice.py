@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
 from db.models.autoservice import AutoService, PaymentMethod, PaymentValue
@@ -10,14 +10,21 @@ from schemas.autoservice import (
     PaymentValueResponseSchema,
 )
 from db.config import get_db
+from utils.security import token_required
 
 
 autoservice_router = APIRouter(prefix="/api/autoservices")
 
 
-@autoservice_router.post("/", response_model=AutoServiceResponseSchema, status_code=201)
+@autoservice_router.post(
+    "/",
+    dependencies=[Depends(token_required)],
+    response_model=AutoServiceResponseSchema,
+    status_code=201,
+)
 def create_autoservice(
-    payload: AutoServiceRequestSchema, db: Session = Depends(get_db)
+    payload: AutoServiceRequestSchema,
+    db: Session = Depends(get_db),
 ):
     data = payload.model_dump(mode="python")
     autoservice = AutoService(**data)
@@ -43,14 +50,20 @@ def create_autoservice(
     return autoservice
 
 
-@autoservice_router.get("/", response_model=list[AutoServiceDetailResponseSchema])
+@autoservice_router.get(
+    "/",
+    response_model=list[AutoServiceDetailResponseSchema],
+    dependencies=[Depends(token_required)],
+)
 def list_autoservices(db: Session = Depends(get_db)):
     services = db.query(AutoService).all()
     return services
 
 
 @autoservice_router.get(
-    "/{autoservice_id}/", response_model=AutoServiceDetailResponseSchema
+    "/{autoservice_id}/",
+    response_model=AutoServiceDetailResponseSchema,
+    dependencies=[Depends(token_required)],
 )
 def detail_autoservice(autoservice_id: int, db: Session = Depends(get_db)):
     autoservice_exists = (
@@ -66,6 +79,7 @@ def detail_autoservice(autoservice_id: int, db: Session = Depends(get_db)):
     "/{autoservice_id}/values/",
     response_model=PaymentValueResponseSchema,
     status_code=201,
+    dependencies=[Depends(token_required)],
 )
 def add_autoservice_value(
     payload: PaymentValueRequestSchema,
