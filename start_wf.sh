@@ -13,9 +13,9 @@ xfce4-terminal \
   --command="zsh -c 'source .venv/bin/activate; nvim .'" &
 
 xfce4-terminal \
-  --title="FastAPI Server" \
+  --title="Docker Compose" \
   --working-directory="$BASE_DIR" \
-  --command="zsh -c 'source .venv/bin/activate; fastapi dev app.py; exec zsh'" &
+  --command="zsh -c 'source .venv/bin/activate; docker-compose up --build; exec zsh'" &
 
 xfce4-terminal \
   --title="Posting CLI" \

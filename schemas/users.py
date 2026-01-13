@@ -5,6 +5,7 @@ class UserCreateSchema(BaseModel):
     username: str
     password: str
     tenant_id: int
+    role_id: int
 
 
 class UserAdminCreateSchema(BaseModel):

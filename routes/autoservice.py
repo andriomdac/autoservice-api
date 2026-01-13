@@ -11,7 +11,7 @@ from schemas.autoservice import (
     PaymentValueResponseSchema,
 )
 from db.config import get_db
-from utils.security import get_token_claims, token_required, validate_token
+from utils.security import token_required
 
 
 autoservice_router = APIRouter(prefix="/api/autoservices")
@@ -30,14 +30,11 @@ def create_autoservice(
 ):
     data = payload.model_dump(mode="python")
     autoservice = AutoService(**data)
-    autoservice.tenant_id = get_token_claims(request)["tenant_id"]
-
     service_exists = (
         db.query(AutoService)
         .filter(
             AutoService.description == autoservice.description,
             AutoService.service_date == autoservice.service_date,
-            AutoService.tenant,
         )
         .first()
     )

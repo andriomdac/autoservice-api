@@ -60,6 +60,7 @@ def create_user(
         username=username,
         password=get_password_hash(password),
         tenant_id=payload.tenant_id,
+        role_id=payload.role_id,
     )
 
     user_exists = db.query(User).filter(User.username == username).first()

@@ -75,11 +75,6 @@ def validate_token(token: str, return_claims: bool = False) -> None:
         raise HTTPException(401, fail_msg)
 
 
-def get_token_claims(request: Request):
-    token = get_token_from_header(request)
-    return validate_token(token=token, return_claims=True)
-
-
 def get_token_from_header(request: Request):
     headers = request.headers
     token = headers.get("authorization")
