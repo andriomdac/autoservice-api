@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from db.models.tenant import Tenant
 from schemas.users import (
     UserAdminCreateSchema,
-    UserCreateSchema,
     UserResponseSchema,
     UserUpdateSchema,
 )
@@ -16,12 +15,17 @@ user_router = APIRouter(prefix="/api/users")
 
 
 @user_router.post("/admin/", status_code=201, response_model=UserResponseSchema)
-def create_admin(payload: UserAdminCreateSchema, db: Session = Depends(get_db)):
-    if db.query(User).first() or db.query(Tenant).first() or db.query(Role).first():
-        raise HTTPException(403, "Não autorizado")
-
+def create_admin_user(payload: UserAdminCreateSchema, db: Session = Depends(get_db)):
     new_role = Role(name="admin")
     new_tenant = Tenant(name=payload.tenant_name)
+
+    tenant_exists = db.query(Tenant).filter(Tenant.name == new_tenant.name).first()
+    if tenant_exists:
+        raise HTTPException(401, "Empresa com mesmo nome já existe")
+
+    role_exists = db.query(Role).filter(Role.name == new_role.name).first()
+    if role_exists:
+        new_role = role_exists
 
     new_admin = User(
         username=payload.username,
@@ -29,6 +33,11 @@ def create_admin(payload: UserAdminCreateSchema, db: Session = Depends(get_db)):
         role=new_role,
         tenant=new_tenant,
     )
+    user_admin_exists = (
+        db.query(User).filter(User.username == new_admin.username).first()
+    )
+    if user_admin_exists:
+        raise HTTPException(401, "Usuário com mesmo nome já existe")
 
     try:
         db.add(new_admin)
@@ -40,38 +49,6 @@ def create_admin(payload: UserAdminCreateSchema, db: Session = Depends(get_db)):
     except Exception:
         db.rollback()
         raise HTTPException(500, "Erro Interno")
-
-
-@user_router.post(
-    "/",
-    dependencies=[Depends(token_required)],
-    status_code=201,
-    response_model=UserResponseSchema,
-)
-def create_user(
-    payload: UserCreateSchema,
-    db: Session = Depends(get_db),
-):
-    body = payload.model_dump()
-    username = body["username"]
-    password = body["password"]
-
-    new_user = User(
-        username=username,
-        password=get_password_hash(password),
-        tenant_id=payload.tenant_id,
-        role_id=payload.role_id,
-    )
-
-    user_exists = db.query(User).filter(User.username == username).first()
-    if user_exists:
-        raise HTTPException(409, f"Usuário {username} já existe")
-
-    else:
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-        return new_user
 
 
 @user_router.get(

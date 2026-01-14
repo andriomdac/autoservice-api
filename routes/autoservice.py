@@ -1,8 +1,8 @@
-from enum import auto
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
 from db.models.autoservice import AutoService, PaymentMethod, PaymentValue
+from db.models.users import User
 from schemas.autoservice import (
     AutoServiceDetailResponseSchema,
     AutoServiceRequestSchema,
@@ -11,28 +11,26 @@ from schemas.autoservice import (
     PaymentValueResponseSchema,
 )
 from db.config import get_db
-from utils.security import token_required
+from utils.security import get_current_user
 
 
 autoservice_router = APIRouter(prefix="/api/autoservices")
 
 
-@autoservice_router.post(
-    "/",
-    dependencies=[Depends(token_required)],
-    response_model=AutoServiceResponseSchema,
-    status_code=201,
-)
+@autoservice_router.post("/", response_model=AutoServiceResponseSchema, status_code=201)
 def create_autoservice(
     payload: AutoServiceRequestSchema,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    autoservice = AutoService(**payload.model_dump())
+    tenant_id = user.tenant_id
+    autoservice = AutoService(**payload.model_dump(), tenant_id=tenant_id)
     service_exists = (
         db.query(AutoService)
         .filter(
             AutoService.description == autoservice.description,
             AutoService.service_date == autoservice.service_date,
+            AutoService.tenant_id == tenant_id,
         )
         .first()
     )
@@ -49,24 +47,26 @@ def create_autoservice(
     return autoservice
 
 
-@autoservice_router.get(
-    "/",
-    response_model=list[AutoServiceDetailResponseSchema],
-    dependencies=[Depends(token_required)],
-)
-def list_autoservices(db: Session = Depends(get_db)):
-    services = db.query(AutoService).all()
+@autoservice_router.get("/", response_model=list[AutoServiceDetailResponseSchema])
+def list_autoservices(
+    user: User = Depends(get_current_user), db: Session = Depends(get_db)
+):
+    services = db.query(AutoService).filter(AutoService.tenant == user.tenant)
     return services
 
 
 @autoservice_router.get(
-    "/{autoservice_id}/",
-    response_model=AutoServiceDetailResponseSchema,
-    dependencies=[Depends(token_required)],
+    "/{autoservice_id}/", response_model=AutoServiceDetailResponseSchema
 )
-def detail_autoservice(autoservice_id: int, db: Session = Depends(get_db)):
+def detail_autoservice(
+    autoservice_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     autoservice_exists = (
-        db.query(AutoService).filter(AutoService.id == autoservice_id).first()
+        db.query(AutoService)
+        .filter(AutoService.id == autoservice_id, AutoService.tenant == user.tenant)
+        .first()
     )
     if not autoservice_exists:
         raise HTTPException(404, "Serviço não encontrado")
@@ -78,12 +78,12 @@ def detail_autoservice(autoservice_id: int, db: Session = Depends(get_db)):
     "/{autoservice_id}/values/",
     response_model=PaymentValueResponseSchema,
     status_code=201,
-    dependencies=[Depends(token_required)],
 )
 def add_autoservice_value(
     payload: PaymentValueRequestSchema,
     autoservice_id: int,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     # Etapa 1: Método de pagamento existe no banco?
     method_exists = (
@@ -96,7 +96,9 @@ def add_autoservice_value(
 
     # Etapa 2: O serviço (autoservice) existe no banco?
     autoservice_exists = (
-        db.query(AutoService).filter(AutoService.id == autoservice_id).first()
+        db.query(AutoService)
+        .filter(AutoService.id == autoservice_id, AutoService.tenant == user.tenant)
+        .first()
     )
     if not autoservice_exists:
         raise HTTPException(404, "Serviço não encontrado")
@@ -108,6 +110,7 @@ def add_autoservice_value(
         .filter(
             PaymentValue.autoservice_id == autoservice_id,
             PaymentValue.payment_method_id == payload.payment_method_id,
+            PaymentValue.autoservice.tenant == user.tenant,
         )
         .first()
     )

@@ -10,7 +10,6 @@ class AutoServiceRequestSchema(BaseModel):
     service_value: int
     observations: str
     is_paid: bool
-    tenant_id: int
 
 
 class PaymentValueRequestSchema(BaseModel):

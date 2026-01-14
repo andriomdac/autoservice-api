@@ -1,6 +1,8 @@
 from typing import Optional
+from fastapi import Depends
 from fastapi.requests import Request
 from pwdlib import PasswordHash
+from db.config import get_db
 from db.models.users import User
 from sqlalchemy.orm import Session
 import jwt
@@ -20,21 +22,6 @@ def verify_password(password: str, hash: str) -> bool:
 
 
 def authenticate_user(username: str, password: str, db: Session) -> User | None:
-    """
-    Verifica as credenciais de um usuário no banco de dados.
-
-    Busca um usuário pelo nome de usuário fornecido e valida a senha
-    comparando o texto puro com o hash armazenado.
-
-    Args:
-        username (str): O nome de usuário para busca.
-        password (str): A senha em texto puro para verificação.
-        db (Session): A instância da sessão do banco de dados SQLAlchemy.
-
-    Returns:
-        User: O objeto do usuário se a autenticação for bem-sucedida.
-        None: Se o usuário não for encontrado ou a senha estiver incorreta.
-    """
     user = db.query(User).filter(User.username == username).first()
     if not user:
         return None
@@ -44,34 +31,11 @@ def authenticate_user(username: str, password: str, db: Session) -> User | None:
         return None
 
 
-def validate_token(token: str, return_claims: bool = False) -> None:
-    """
-    Valida a integridade e a expiração de um token JWT.
-
-    Decodifica o token usando a chave e o algoritmo pré-definidos. Caso o token
-    esteja malformado, com assinatura inválida ou expirado, uma exceção HTTP 401
-    é lançada.
-
-    Args:
-        token (str): O token JWT a ser validado.
-
-    Raises:
-        HTTPException: Se o token for inválido (DecodeError) ou se o tempo
-            de expiração tiver passado (ExpiredSignatureError).
-
-    Returns:
-        None: Se o token for válido e a decodificação ocorrer sem erros.
-    """
+def validate_token(token: str) -> dict:
     fail_msg = "token inválido ou expirado"
     try:
-        decoded = jwt.decode(jwt=token, key=KEY, algorithms=[ALG])
-        if return_claims:
-            return decoded
-        pass
-
-    except DecodeError:
-        raise HTTPException(401, fail_msg)
-    except ExpiredSignatureError:
+        return jwt.decode(jwt=token, key=KEY, algorithms=[ALG])
+    except (DecodeError, ExpiredSignatureError):
         raise HTTPException(401, fail_msg)
 
 
@@ -85,6 +49,17 @@ def get_token_from_header(request: Request):
         token = ""
 
     return token
+
+
+def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
+    fail_msg = "token inválido ou expirado"
+    token = get_token_from_header(request=request)
+    user_id = validate_token(token=token)["sub"]
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(401, fail_msg)
+    return user
 
 
 def token_required(request: Request) -> None:

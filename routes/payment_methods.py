@@ -4,11 +4,12 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from db.config import get_db
 from db.models.autoservice import PaymentMethod
+from db.models.users import User
 from schemas.payment_methods import (
     PaymentMethodRequestSchema,
     PaymentMethodResponseSchema,
 )
-from utils.security import token_required
+from utils.security import get_current_user
 
 payment_method_router = APIRouter(prefix="/api/payment-methods")
 
@@ -16,9 +17,8 @@ payment_method_router = APIRouter(prefix="/api/payment-methods")
 @payment_method_router.get(
     "/",
     response_model=list[PaymentMethodResponseSchema],
-    dependencies=[Depends(token_required)],
 )
-def list_methods(db: Session = Depends(get_db)):
+def list_methods(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     methods = db.query(PaymentMethod).all()
     return methods
 
@@ -26,9 +26,12 @@ def list_methods(db: Session = Depends(get_db)):
 @payment_method_router.post(
     "/",
     response_model=PaymentMethodResponseSchema,
-    dependencies=[Depends(token_required)],
 )
-def create_method(payload: PaymentMethodRequestSchema, db: Session = Depends(get_db)):
+def create_method(
+    payload: PaymentMethodRequestSchema,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     data = payload.model_dump()
     method = PaymentMethod()
     method.name = data["name"]

@@ -17,7 +17,7 @@ tenant_router = APIRouter(prefix="/api/tenants")
 def create_tenant(payload: TenantRequestSchema, db: Session = Depends(get_db)):
     tenant_exists = db.query(Tenant).filter(Tenant.name == payload.name).first()
     if tenant_exists:
-        raise HTTPException(409, "Cliente com mesmo nome já existe")
+        raise HTTPException(409, "Empresa com mesmo nome já existe")
 
     tenant_obj = Tenant(**payload.model_dump())
 
