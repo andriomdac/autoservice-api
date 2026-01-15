@@ -51,7 +51,7 @@ def create_autoservice(
 def list_autoservices(
     user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    services = db.query(AutoService).filter(AutoService.tenant == user.tenant)
+    services = db.query(AutoService).filter(AutoService.tenant_id == user.tenant_id)
     return services
 
 
@@ -65,7 +65,9 @@ def detail_autoservice(
 ):
     autoservice_exists = (
         db.query(AutoService)
-        .filter(AutoService.id == autoservice_id, AutoService.tenant == user.tenant)
+        .filter(
+            AutoService.id == autoservice_id, AutoService.tenant_id == user.tenant_id
+        )
         .first()
     )
     if not autoservice_exists:
@@ -97,7 +99,9 @@ def add_autoservice_value(
     # Etapa 2: O serviço (autoservice) existe no banco?
     autoservice_exists = (
         db.query(AutoService)
-        .filter(AutoService.id == autoservice_id, AutoService.tenant == user.tenant)
+        .filter(
+            AutoService.id == autoservice_id, AutoService.tenant_id == user.tenant_id
+        )
         .first()
     )
     if not autoservice_exists:
@@ -110,7 +114,7 @@ def add_autoservice_value(
         .filter(
             PaymentValue.autoservice_id == autoservice_id,
             PaymentValue.payment_method_id == payload.payment_method_id,
-            PaymentValue.autoservice.tenant == user.tenant,
+            PaymentValue.autoservice.has(tenant_id=user.tenant_id),
         )
         .first()
     )
