@@ -1,3 +1,8 @@
+# WARNING: DEVELOPMENT USE ONLY
+# Do not use this configuration in production.
+# Replace hardcoded values with environment variables (e.g., python-dotenv or os.environ).
+
+
 KEY = "35d0e536e0bd2758668b99608bedc2982b1574c39643190742888c7920b78e31"
 ALG = "HS256"
 ZONE_INFO = "America/Sao_Paulo"
