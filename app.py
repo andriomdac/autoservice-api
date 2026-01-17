@@ -25,3 +25,13 @@ app.include_router(autoservice_router)
 app.include_router(payment_method_router)
 app.include_router(tenant_router)
 app.include_router(role_router)
+
+
+@app.get("/api/")
+def welcome():
+    return {
+        "Message": "Welcome to AutoService API! Take a look at my resources by accessing the endpoints below",
+        "Swagger": "/docs",
+        "Redoc": "/redoc",
+        "New User": "If your new here, create an admin account with your own tenant by accessing via POST:/api/users/admin/",
+    }
